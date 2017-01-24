@@ -6,7 +6,8 @@ require('colors');
 
 var fontGenerator = require('../lib/index'),
     errors = require('../lib/errors'),
-    minimist = require('minimist');
+    minimist = require('minimist'),
+    fs = require('fs');
 
 /*
  * Initialise script and options
@@ -39,6 +40,10 @@ function init() {
         },
         calledEmpty = Object.keys(args).length === 1 && args._.length === 0;
 
+    options.paths = recursivelyCreatePaths(options.paths[0]);
+
+    console.log('Paths are: ' + JSON.stringify(options.paths));
+
     // Parse Boolean values that default to true
     [ 'html', 'css', 'json' ].forEach(function (key) {
         if (typeof options[key] !== 'undefined') {
@@ -53,6 +58,30 @@ function init() {
     }
 
     run(options);
+}
+
+function recursivelyCreatePaths(path) {
+
+    var paths = [];
+
+    var stats = fs.statSync(path);
+
+    if(stats.isFile() && path.endsWith('.svg'))
+        paths.push(path);
+    }
+
+    if(stats.isDirectory()) {
+        var subPaths = fs.readdirSync(path);
+        subPaths.forEach(function(subPath) {
+            var subPaths = recursivelyCreatePaths(path + '/' + subPath);
+
+            subPaths.forEach(function(s) {
+                paths.push(s);
+            });
+        });
+    }
+
+    return paths;
 }
 
 /*
